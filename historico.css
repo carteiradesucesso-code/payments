@@ -1,0 +1,37 @@
+/* Histórico */
+.hist-list {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+  padding: 8px;
+}
+.hist-item {
+  display: grid;
+  grid-template-columns: 120px 1fr 160px 120px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+.hist-item:last-child {
+  border-bottom: none;
+}
+.hist-item .tipo {
+  font-weight: 600;
+}
+.hist-item .valor {
+  text-align: right;
+}
+.hist-empty {
+  padding: 12px;
+  color: var(--muted);
+}
+.hist-loading {
+  padding: 12px;
+  color: var(--muted);
+}
+.hist-error {
+  padding: 12px;
+  color: var(--danger);
+}

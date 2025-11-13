@@ -1,0 +1,3 @@
+// Configuração do Supabase (preenchida automaticamente)
+export const SUPABASE_URL = "https://wlvfxsxijwrweedrzbdk.supabase.co";
+export const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndsdmZ4c3hpandyd2VlZHJ6YmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MjgxODIsImV4cCI6MjA3ODQwNDE4Mn0.gpTZDZUJCrxO9vt6vfyoNiwSjP7jMTodVluw70K_Nss";

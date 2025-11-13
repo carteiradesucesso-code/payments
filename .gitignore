@@ -1,0 +1,20 @@
+# Sistema / OS
+.DS_Store
+Thumbs.db
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+
+# Build/dep comuns
+node_modules/
+dist/
+
+# Ambiente
+.env
+.env.local
+.env.*
+
+# Vite/serve caches (se criados)
+.vite/
+.cache/

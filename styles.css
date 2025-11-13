@@ -1,0 +1,388 @@
+:root {
+  /* Paleta reformulada (tema escuro neutro com acentos teal/verde) */
+  --bg: #0f1117;
+  --fg: #e6edf3;
+  --muted: #94a3b8;
+  --panel: #131720;
+  --accent: #2dd4bf;   /* teal principal */
+  --accent-2: #14b8a6; /* teal mais escuro para hover */
+  --danger: #ef4444;   /* vermelho moderno */
+  --warning: #f59e0b;  /* amber para dicas */
+  /* Tokens globais complementares */
+  --border: rgba(255,255,255,0.12);
+  --shadow-sm: 0 6px 16px rgba(0,0,0,0.28);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg); color: var(--fg);
+}
+
+.container { max-width: min(100%, 1100px); margin: 0 auto; padding: clamp(16px, 3vw, 32px) clamp(12px, 3vw, 20px); }
+.app-header h1 { margin: 0 0 6px; font-size: 24px; }
+.sub { margin: 0 0 20px; color: var(--muted); }
+
+.card { background: var(--panel); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.card h2 { margin-top: 0; }
+.card.muted { opacity: 0.9; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 10px; }
+
+label { display: block; margin-bottom: 12px; font-size: 14px; color: var(--muted); }
+input[type="email"], input[type="password"] {
+  width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.2); color: var(--fg);
+}
+
+[aria-invalid="true"] {
+  border-color: var(--danger) !important;
+}
+.input-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.15);
+}
+
+.field { margin-bottom: 12px; }
+.input-group { display: flex; gap: 8px; align-items: center; }
+.input-group input { flex: 1; }
+.toggle { background: transparent; border: 1px solid rgba(255,255,255,0.18); color: var(--fg); padding: 8px 10px; border-radius: 8px; }
+.toggle:hover { background: rgba(255,255,255,0.06); }
+
+.hint { margin-top: 6px; font-size: 12px; color: var(--warning); }
+
+.error-field { margin-top: 6px; font-size: 12px; color: var(--danger); }
+.suggestion { display: block; margin-top: 6px; font-size: 12px; color: var(--warning); }
+
+.strength { margin: 10px 0 12px; }
+.meter { width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0%; background: #ff6b6b; transition: width 160ms ease, background 160ms ease; }
+.rules { list-style: none; padding: 8px 0 0; margin: 0; display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+.rules li { position: relative; padding-left: 22px; }
+.rules li::before { content: "○"; position: absolute; left: 0; color: #8e96af; }
+.rules li.ok { color: #9affc4; }
+.rules li.ok::before { content: "✓"; color: #7bffa9; }
+
+.checkbox { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+.checkbox input { width: 16px; height: 16px; }
+
+.auth-extras { display: flex; gap: 12px; margin: 8px 0 12px; }
+.auth-extras .link { background: transparent; color: var(--accent); border: none; padding: 0; text-decoration: underline; }
+
+button { cursor: pointer; border: none; background: var(--accent); color: #fff; padding: 10px 14px; border-radius: 8px; font-weight: 600; }
+button:hover { background: var(--accent-2); }
+.outline { background: transparent; border: 1px solid var(--accent); color: var(--fg); }
+.outline:hover { background: rgba(124,147,255,0.1); }
+/* Botão pequeno para ações auxiliares */
+.small { font-size: 0.9rem; padding: 6px 10px; border-radius: 8px; }
+
+/* Estado de carregamento e desativação */
+button[disabled] { opacity: 0.6; cursor: not-allowed; }
+button[aria-busy="true"], button.loading { position: relative; }
+button.loading::after {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.7);
+  border-top-color: transparent;
+  border-radius: 50%;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+/* Desativar interações do app durante processamento */
+body.app-busy { cursor: progress; }
+body.app-busy main, body.app-busy .container { pointer-events: none; }
+
+.msg { margin-top: 10px; font-size: 14px; }
+.msg.error { color: var(--danger); }
+.msg.success { color: #7bffa9; }
+
+.actions { display: flex; gap: 12px; }
+
+.code {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Evita scrollbar externa no container do cronograma */
+#emp-schedule.code { overflow: visible; max-height: none; background: var(--panel); border: 1px solid var(--border); }
+
+#user-email { font-weight: 600; }
+
+/* Layout app com menu lateral */
+.app-layout { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; gap: clamp(12px, 2vw, 16px); }
+.app-header { grid-column: 1; }
+.app-sidebar { grid-column: 1; }
+.app-main { grid-column: 1; }
+.app-header {
+  grid-column: 1 / span 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.app-header .head-left { min-width: 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.app-header .head-right { display: flex; gap: 12px; align-items: center; }
+.app-header .brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #001;
+  font-weight: 900;
+}
+.brand-text h1 { margin: 0; font-size: 18px; }
+.brand-text .sub { margin: 0; font-size: 12px; color: var(--muted); }
+.app-sidebar { background: var(--panel); border-radius: 12px; padding: 16px; }
+.app-sidebar nav { display: grid; gap: 8px; }
+.nav-link { text-align: left; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--fg); padding: 10px 12px; border-radius: 8px; }
+.nav-link:hover { background: rgba(255,255,255,0.06); }
+.nav-link.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,147,255,0.25) inset; }
+.app-main { min-height: 420px; }
+
+/* Ações rápidas (FABs) */
+.fab { width: 56px; height: 56px; border-radius: 50%; font-size: 28px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; border: none; }
+.fab:hover { background: var(--accent-2); }
+.fab.danger { background: var(--danger); }
+.fab.danger:hover { filter: brightness(0.9); }
+.header-actions { display: flex; gap: 10px; }
+
+/* Split-button para ações compostas */
+.split { position: relative; display: inline-flex; align-items: center; }
+.split .caret { width: auto; padding: 6px 8px; border-left: none; border-radius: 0 8px 8px 0; }
+.split > #quick-clear { border-radius: 8px 0 0 8px; }
+
+/* Menu simples para opções de limpeza */
+.menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 180px; background: var(--panel); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; box-shadow: 0 10px 24px rgba(0,0,0,0.35); padding: 6px; z-index: 900; }
+.menu[hidden] { display: none; }
+.menu .menu-item { width: 100%; text-align: left; background: transparent; border: 1px solid rgba(255,255,255,0.14); color: var(--fg); padding: 8px 10px; border-radius: 8px; }
+.menu .menu-item + .menu-item { margin-top: 6px; }
+.menu .menu-item:hover { background: rgba(255,255,255,0.06); }
+
+/* Snackbar com ação (ex.: Desfazer) */
+.snackbar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #101624; color: var(--fg); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; box-shadow: 0 8px 22px rgba(0,0,0,0.4); padding: 10px 12px; display: flex; gap: 12px; align-items: center; z-index: 1100; }
+.snackbar[hidden] { display: none; }
+.snackbar .msg { margin: 0; }
+.snackbar .action { background: transparent; border: 1px solid var(--accent); color: var(--fg); padding: 6px 10px; border-radius: 8px; }
+.snackbar .close { background: transparent; border: 1px solid rgba(255,255,255,0.18); color: var(--muted); padding: 6px 10px; border-radius: 8px; }
+
+/* Views isoladas */
+/* Modern responsive modal: dynamic viewport + container queries */
+.modal {
+  container-type: size;
+  box-sizing: border-box;
+  padding: 16px;
+}
+
+.modal-dialog {
+  width: min(420px, 92cqi);
+  max-height: min(92vh, 720px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@supports (height: 100dvh) {
+  .modal-dialog {
+    max-height: min(92dvh, 720px);
+  }
+}
+.view[hidden] { display: none; }
+.view.active { display: block; }
+
+/* Barras visuais simples */
+.bar-split, .bar-growth { margin-top: 10px; height: 12px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; position: relative; }
+.bar-split .bar.interest { background: var(--danger); display: block; height: 100%; }
+.bar-split .bar.amort { background: #22c55e; display: block; height: 100%; position: absolute; right: 0; }
+.bar-growth .bar.base { background: rgba(255,255,255,0.18); display: block; height: 100%; width: 100%; opacity: 0.6; }
+.bar-growth .bar.gain { background: var(--accent); display: block; height: 100%; }
+
+/* Modal básico */
+.modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; pointer-events: none; }
+.modal[hidden] { display: none; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); pointer-events: auto; z-index: 0; backdrop-filter: blur(2px); }
+.modal-dialog { position: relative; z-index: 1; pointer-events: auto; width: min(420px, calc(100% - 32px)); max-height: none; overflow: hidden; background: var(--panel); border-radius: 12px; padding: 16px 16px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); will-change: transform; }
+.modal-dialog h3 { margin: 0 0 10px; }
+.modal .actions { display: flex; gap: 10px; margin-top: 12px; justify-content: flex-end; }
+.modal input[type="text"], .modal input[type="number"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: var(--fg); }
+.danger { background: var(--danger); color: #fff; }
+.danger:hover { filter: brightness(0.95); }
+.danger-zone { border-top: 1px solid rgba(255,255,255,0.08); margin-top: 12px; padding-top: 12px; }
+.danger-zone .actions { justify-content: flex-end; }
+body.modal-open { overflow: hidden; }
+.modal input[type="number"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: var(--fg); }
+
+/* Game feel minimalista */
+button { transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease; }
+button:active { transform: scale(0.98); }
+
+/* Nav-link ativo com leve destaque */
+.nav-link { transition: transform 160ms ease, box-shadow 160ms ease; }
+.nav-link.active { transform: scale(1.01); box-shadow: 0 0 0 2px rgba(124,147,255,0.18) inset; }
+
+/* FAB com ripple suave */
+.fab { position: relative; overflow: hidden; }
+.fab.clicked::after { content: ""; position: absolute; left: 50%; top: 50%; width: 100%; height: 100%; border-radius: 50%; transform: translate(-50%, -50%) scale(0.2); background: rgba(255,255,255,0.35); animation: ripplePulse 420ms ease-out forwards; }
+.fab.danger.clicked::after { background: rgba(255,107,107,0.4); }
+@keyframes ripplePulse { to { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } }
+
+/* Pulses informativos (bom/ruim) */
+.pulse-good { animation: pulseGood 280ms ease; }
+.pulse-bad { animation: pulseBad 280ms ease; }
+@keyframes pulseGood {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(123,255,169,0.0); }
+  50% { transform: scale(1.015); box-shadow: 0 0 0 6px rgba(123,255,169,0.12); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(123,255,169,0.0); }
+}
+@keyframes pulseBad {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,107,0.0); }
+  50% { transform: scale(0.985); box-shadow: 0 0 0 6px rgba(255,107,107,0.14); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,107,0.0); }
+}
+
+/* Shake leve para erros de input */
+.shake { animation: shakeX 220ms ease; }
+@keyframes shakeX {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+/* Abrir modal com squash/stretch sutil */
+.modal.open .modal-dialog { animation: modalIn 180ms cubic-bezier(.2,.8,.2,1); }
+@keyframes modalIn {
+  0% { opacity: 0; transform: scale(0.985); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Responsividade básica (mobile) */
+@media (max-width: 768px) {
+  .container { padding: clamp(16px, 3vw, 24px) clamp(12px, 3vw, 12px); }
+  /* Sidebar como drawer mobile */
+  .app-sidebar { position: fixed; left: 0; top: 0; height: 100dvh; width: min(82vw, 320px); transform: translateX(-104%); transition: transform .2s ease; box-shadow: var(--shadow-sm); z-index: 1000; }
+  .sidebar-open .app-sidebar { transform: translateX(0); }
+  .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(2px); display: none; z-index: 900; }
+  .sidebar-open .sidebar-backdrop { display: block; }
+  .header-actions { flex-wrap: wrap; }
+  .fab { width: 48px; height: 48px; font-size: 24px; }
+  /* Gráficos: altura menor em telas pequenas */
+  #view-painel #chart-saldo,
+  #view-painel #chart-es { height: 200px; }
+}
+
+@media (min-width: 768px) {
+  .app-layout { grid-template-columns: 240px 1fr; grid-template-rows: auto 1fr; }
+  .app-header { grid-column: 1 / -1; }
+  .app-sidebar { grid-column: 1; }
+  .app-main { grid-column: 2; }
+}
+/* Botão primário de alta frequência (Registrar pagamento) */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px; /* alvo de toque acessível */
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent); /* usa paleta do tema */
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.22);
+  transition: background .15s ease, transform .08s ease, box-shadow .15s ease;
+}
+.btn-primary:hover { background: var(--accent-2); }
+.btn-primary:active { filter: brightness(0.95); transform: translateY(1px); }
+.btn-primary:focus-visible { outline: 3px solid rgba(45,212,191,0.45); outline-offset: 2px; }
+.btn-primary:disabled, .btn-primary[aria-disabled="true"] { opacity: .6; cursor: not-allowed; }
+
+/* Espaçamento do grupo de ações dentro de painéis */
+.panel .actions { margin-top: 12px; }
+
+/* Linha de formulário para input+botão lado a lado */
+.form-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.form-row .btn-primary { width: auto; }
+
+/* Campo de texto padrão do app (fora do modal) */
+.form-control {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(0,0,0,0.20);
+  color: var(--fg);
+  font-size: 1rem;
+  transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.form-control::placeholder { color: rgba(230,237,243,0.55); }
+.form-control:focus-visible { outline: 3px solid rgba(45,212,191,0.35); outline-offset: 2px; }
+.form-control[disabled] { opacity: .6; cursor: not-allowed; }
+.form-control[aria-invalid="true"] { border-color: var(--danger); box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+
+/* ----------------------------
+   Cronograma de Empréstimo
+   ---------------------------- */
+.loan-schedule { display: flex; flex-direction: column; gap: 12px; }
+.schedule-head { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.schedule-head .summary { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.schedule-head .summary .label { opacity: .85; font-weight: 600; }
+.schedule-head .summary .value { font-weight: 700; }
+.schedule-head .summary .spacer { width: 1px; height: 18px; background: var(--border); opacity: .6; }
+.schedule-head .next { display: inline-flex; align-items: center; gap: 8px; }
+.schedule-head .trend { margin-top: 6px; }
+.sparkline { display: block; max-width: 100%; }
+.waterfall-wrap { margin-top: 6px; }
+.waterfall { display: block; max-width: 100%; }
+/* Oculta cronograma global no painel principal; agora via modal por empréstimo */
+#emp-schedule { display: none !important; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); background: rgba(0,0,0,.18); font-weight: 700; }
+.chip-interest { color: #F59E0B; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.35); }
+.chip-amort { color: #10B981; background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.35); }
+
+.schedule-scroll { position: relative; isolation: isolate; }
+.scroll-lock { overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.schedule-scroll { max-height: 320px; }
+.modal-dialog.schedule-dialog { width: clamp(320px, 92vw, 720px); max-height: min(88dvh, 720px); display: grid; grid-template-rows: auto 1fr auto; }
+.modal-dialog.schedule-dialog .schedule-head { display: grid; grid-template-columns: 1fr; gap: clamp(8px, 2vw, 12px); }
+@media (min-width: 600px) { .modal-dialog.schedule-dialog .schedule-head { grid-template-columns: 1fr auto; align-items: center; } }
+.modal-dialog.schedule-dialog .schedule-scroll { overflow: auto; max-height: clamp(260px, 55dvh, 480px); }
+.modal-dialog.schedule-dialog .schedule-table { width: 100%; table-layout: fixed; }
+.modal-dialog.schedule-dialog .waterfall-wrap svg, .modal-dialog.schedule-dialog .trend svg { max-width: 100%; height: auto; }
+.modal-dialog.schedule-dialog .chip { font-size: clamp(12px, 2.8vw, 14px); }
+.schedule-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.schedule-table thead th { position: sticky; top: 0; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--border); box-shadow: 0 6px 8px -6px rgba(0,0,0,.35); }
+.schedule-table th, .schedule-table td { padding: 6px 8px; }
+.col-mes { text-align: left; font-variant-numeric: tabular-nums; font-weight: 700; }
+.col-juros, .col-amort, .col-saldo { text-align: left; font-variant-numeric: tabular-nums; }
+
+.schedule-empty { display: grid; grid-template-columns: 1fr; }
+.schedule-empty-msg { padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; opacity: .75; }
+
+@media (max-width: 640px) {
+  /* Layout responsivo permanece válido com tabela semântica */
+}

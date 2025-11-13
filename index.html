@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cobrança — Login</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <h1>Aplicativo Financeiro — Cobrança</h1>
+        <p class="sub">Por enquanto: login simples com Supabase</p>
+      </header>
+
+      <section id="auth-section" class="card">
+        <h2>Acesso</h2>
+        <div class="grid">
+          <form id="signup-form" class="panel" hidden>
+            <h3>Criar conta</h3>
+            <div class="field">
+              <label for="signup-name">Nome completo (opcional)</label>
+              <input type="text" id="signup-name" name="name" placeholder="Ex.: Maria Silva" autocomplete="name" />
+            </div>
+            <label>
+              Email
+              <input type="email" id="signup-email" name="email" required placeholder="voce@exemplo.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" />
+              <span id="signup-email-suggestion" class="suggestion" aria-live="polite"></span>
+            </label>
+            <div class="field">
+              <label for="signup-password">Senha</label>
+              <div class="input-group">
+                <input type="password" id="signup-password" name="new-password" required placeholder="No mínimo 8 caracteres" autocomplete="new-password" autocapitalize="none" enterkeyhint="next" aria-describedby="pw-rules caps-signup" />
+                <button type="button" class="toggle" data-target="signup-password" aria-label="Mostrar/ocultar senha">Mostrar</button>
+              </div>
+              <div id="caps-signup" class="hint" hidden>Caps Lock está ativado</div>
+              <div id="error-signup-password" class="error-field" aria-live="polite"></div>
+            </div>
+            <div class="field">
+              <label for="signup-password-confirm">Confirmar senha</label>
+              <div class="input-group">
+                <input type="password" id="signup-password-confirm" name="new-password-confirm" required placeholder="Repita a senha" autocomplete="new-password" autocapitalize="none" enterkeyhint="done" />
+                <button type="button" class="toggle" data-target="signup-password-confirm" aria-label="Mostrar/ocultar confirmação">Mostrar</button>
+              </div>
+              <div id="error-signup-password-confirm" class="error-field" aria-live="polite"></div>
+            </div>
+
+            <div class="strength">
+              <div class="meter" id="pw-meter" role="progressbar" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0">
+                <span id="pw-meter-fill"></span>
+              </div>
+              <ul class="rules" id="pw-rules">
+                <li data-rule="len">Mínimo de 8 caracteres</li>
+                <li data-rule="mix">Misture letras e números</li>
+                <li data-rule="spec">Inclua um caractere especial (opcional, recomendado)</li>
+                <li data-rule="email">Não use seu email como senha</li>
+              </ul>
+            </div>
+
+            <label class="checkbox">
+              <input type="checkbox" id="terms" required />
+              <span>Aceito os <a href="terms.html" target="_blank" rel="noopener">Termos</a> e a <a href="privacy.html" target="_blank" rel="noopener">Privacidade</a></span>
+            </label>
+            <button type="submit" id="signup-submit">Cadastrar</button>
+          </form>
+
+          <form id="signin-form" class="panel">
+            <h3>Entrar</h3>
+            <label>
+              Email
+              <input type="email" id="signin-email" name="email" required placeholder="voce@exemplo.com" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" />
+              <span id="signin-email-suggestion" class="suggestion" aria-live="polite"></span>
+            </label>
+            <div class="field">
+              <label for="signin-password">Senha</label>
+              <div class="input-group">
+                <input type="password" id="signin-password" name="current-password" required placeholder="Sua senha" autocomplete="current-password" autocapitalize="none" enterkeyhint="go" aria-describedby="caps-signin" />
+                <button type="button" class="toggle" data-target="signin-password" aria-label="Mostrar/ocultar senha">Mostrar</button>
+              </div>
+              <div id="caps-signin" class="hint" hidden>Caps Lock está ativado</div>
+              <div id="error-signin-password" class="error-field" aria-live="polite"></div>
+            </div>
+            <div class="auth-extras">
+              <button type="button" id="forgot-btn" class="link">Esqueci minha senha</button>
+            </div>
+            <button type="submit" id="signin-submit">Entrar</button>
+          </form>
+        </div>
+
+        <!-- Alternar cadastro fora do formulário de login para evitar confusão semântica -->
+        <div class="auth-extras">
+          <button type="button" id="signup-toggle-btn" class="link" aria-controls="signup-form">Cadastrar</button>
+        </div>
+
+        <div id="auth-msg" class="msg" aria-live="polite"></div>
+      </section>
+
+      
+
+      
+    </main>
+
+    <script type="module" src="js/auth.js"></script>
+  </body>
+</html>

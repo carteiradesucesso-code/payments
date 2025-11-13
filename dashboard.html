@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cobrança — Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container app-layout">
+      <header class="app-header" role="banner">
+        <div class="head-left">
+          <div class="brand" aria-label="Cobrança">
+            <span class="brand-mark" aria-hidden="true">R$</span>
+            <div class="brand-text">
+              <h1>Cobrança</h1>
+              <p class="sub">Área autenticada — sessão obrigatória</p>
+            </div>
+          </div>
+          <p id="user-email" class="sub"></p>
+        </div>
+        <div class="head-right">
+          <button id="nav-toggle" class="toggle" aria-label="Abrir menu" aria-controls="app-sidebar" aria-expanded="false">Menu</button>
+          <div class="header-actions">
+            <button id="signout-btn" class="outline" aria-label="Sair da sessão">Sair</button>
+          </div>
+        </div>
+      </header>
+
+      <aside id="app-sidebar" class="app-sidebar" role="navigation" aria-label="Menu financeiro">
+        <nav role="tablist" aria-label="Seções do aplicativo">
+          <button class="nav-link" role="tab" aria-selected="true" tabindex="0" data-view="emprestimo" aria-controls="view-emprestimo">Empréstimo</button>
+        </nav>
+      </aside>
+      <div class="sidebar-backdrop" hidden></div>
+
+      <main class="app-main" role="main">
+        <section id="view-emprestimo" class="card view" hidden>
+          <div class="split head-actions">
+            <h2 style="margin:0">Empréstimo (Juros Mensais)</h2>
+            <button id="emp-manage-open" class="outline" aria-label="Novo empréstimo">NOVO EMPRÉSTIMO</button>
+          </div>
+          <!-- p removido: informações duplicadas já presentes dentro dos cards -->
+          <div class="panel" style="margin-top:12px">
+            <h3 style="margin-top:0">Resumo de Dívidas</h3>
+            <div id="debt-circles" class="grid" aria-live="polite"></div>
+          </div>
+          <div class="grid">
+            
+          </div>
+        </section>
+        </section>
+      </main>
+      
+      <!-- Modal: Adicionar Entrada -->
+      <div id="modal-entrada" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-entrada-title" hidden>
+        <div class="modal-backdrop" data-close="entrada" aria-hidden="true"></div>
+        <div class="modal-dialog">
+          <h3 id="modal-entrada-title">Adicionar Entrada</h3>
+          <label for="modal-entrada-valor">Valor (R$)</label>
+          <input id="modal-entrada-valor" type="text" inputmode="decimal" placeholder="0,00" />
+          <label for="modal-entrada-desc">Descrição/Anotação (opcional)</label>
+          <input id="modal-entrada-desc" type="text" placeholder="Ex.: salário, venda, nota..." />
+          <label for="modal-entrada-quando">Quando (data/hora, opcional)</label>
+          <input id="modal-entrada-quando" type="datetime-local" />
+          <div class="actions">
+            <button id="modal-entrada-add">Adicionar</button>
+            <button id="modal-entrada-close" class="outline">Cancelar</button>
+          </div>
+          <p id="modal-entrada-out" class="sub" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <!-- Modal: Adicionar Saída -->
+      <div id="modal-saida" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-saida-title" hidden>
+        <div class="modal-backdrop" data-close="saida" aria-hidden="true"></div>
+        <div class="modal-dialog">
+          <h3 id="modal-saida-title">Adicionar Saída</h3>
+          <label for="modal-saida-valor">Valor (R$)</label>
+          <input id="modal-saida-valor" type="text" inputmode="decimal" placeholder="0,00" />
+          <label for="modal-saida-desc">Descrição/Anotação (opcional)</label>
+          <input id="modal-saida-desc" type="text" placeholder="Ex.: compra, despesa, nota..." />
+          <label for="modal-saida-quando">Quando (data/hora, opcional)</label>
+          <input id="modal-saida-quando" type="datetime-local" />
+          <div class="actions">
+            <button id="modal-saida-add">Adicionar</button>
+            <button id="modal-saida-close" class="outline">Cancelar</button>
+          </div>
+          <p id="modal-saida-out" class="sub" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <!-- View: Histórico -->
+      <section id="view-historico" class="card view" hidden>
+        <h2>Histórico</h2>
+        <div class="grid">
+          <div class="panel">
+            <label for="hist-busca">Buscar (nome/anotação)</label>
+            <input id="hist-busca" type="text" placeholder="Ex.: salário, mercado..." />
+          </div>
+          <div class="panel">
+            <label for="hist-inicio">Início (data)</label>
+            <input id="hist-inicio" type="date" />
+            <label for="hist-fim" style="margin-top:8px">Fim (data)</label>
+            <input id="hist-fim" type="date" />
+          </div>
+          <div class="panel">
+            <label for="hist-tipo">Tipo</label>
+            <select id="hist-tipo">
+              <option value="todos">Todos</option>
+              <option value="entrada">Entradas</option>
+              <option value="saida">Saídas</option>
+            </select>
+          </div>
+        </div>
+        <div class="hist-actions actions" style="margin-top:10px">
+          <button id="hist-aplicar">Aplicar filtros</button>
+        </div>
+        <div id="hist-list" class="hist-list" aria-live="polite" style="margin-top:12px"></div>
+      </section>
+    </div>
+
+    <!-- Modal: Gerenciar Empréstimo -->
+    <div id="modal-emp" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-emp-title" hidden>
+      <div class="modal-backdrop" data-close="emp" aria-hidden="true"></div>
+      <div class="modal-dialog">
+        <h3 id="modal-emp-title">Gerenciar Empréstimo</h3>
+        <label for="modal-emp-principal">Principal (R$)</label>
+        <input id="modal-emp-principal" type="text" inputmode="decimal" placeholder="0,00" />
+        <label for="modal-emp-taxa">Taxa mensal (%)</label>
+        <input id="modal-emp-taxa" type="number" step="0.01" placeholder="5" />
+        <p class="hint">Digite <strong>CONFIRMAR</strong> para habilitar salvar.</p>
+        <input id="modal-emp-confirm" type="text" placeholder="CONFIRMAR" />
+        <label for="modal-emp-pass" style="margin-top:10px">Senha de exclusão</label>
+        <input id="modal-emp-pass" type="password" placeholder="Mín. 8 caracteres, letras maiúsculas, minúsculas e números" />
+        <p class="hint">A senha será exigida para excluir este empréstimo.</p>
+        <div class="actions" style="margin-top:6px">
+          <button id="modal-emp-set-pass" class="outline" disabled>Definir/Atualizar senha</button>
+        </div>
+        <div class="actions">
+          <button id="modal-emp-save" disabled>Salvar/Registrar empréstimo</button>
+          <button id="modal-emp-close" class="outline">Cancelar</button>
+        </div>
+        <div class="danger-zone" role="group" aria-label="Zona de exclusão">
+          <p class="hint">Para excluir, digite <strong>APAGAR</strong> e informe a senha:</p>
+          <input id="modal-emp-delete-confirm" type="text" placeholder="APAGAR" />
+          <label for="modal-emp-delete-pass" style="margin-top:8px">Senha cadastrada</label>
+          <input id="modal-emp-delete-pass" type="password" placeholder="Digite a senha de exclusão" />
+          <div class="actions">
+            <button id="modal-emp-delete" class="danger" disabled>Excluir empréstimo</button>
+          </div>
+        </div>
+        <p id="modal-emp-out" class="sub" aria-live="polite"></p>
+      </div>
+    </div>
+
+    <!-- Snackbar raiz: mensagens com ação (ex.: Desfazer) -->
+    <div id="snackbar" class="snackbar" aria-live="polite" aria-atomic="true" hidden></div>
+    <!-- D3.js (CDN) para gráficos leves sem build -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
+  </body>
+</html>
