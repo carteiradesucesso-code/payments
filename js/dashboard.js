@@ -573,20 +573,25 @@ async function renderDebtSummary() {
     const pays = await fetchPagamentosForDebt(d.id)
     const amortTotalCents = pays.reduce((acc, p) => acc + Math.round(Number(p.principal_amortizado || 0) * 100), 0)
     const principalCents = Math.round(Number(d.valor_principal || 0) * 100)
-    const card = document.createElement('div')
-    card.className = 'panel'
-    card.style.alignItems = 'center'
-    card.style.textAlign = 'center'
-    card.style.position = 'relative'
-    const title = document.createElement('h4')
-    title.textContent = d.titulo || 'Empréstimo'
-    title.style.marginTop = '0'
-    card.appendChild(title)
-    const svg = createDebtCircleSVG({ principalCents, amortizedCents: amortTotalCents, size: 140, stroke: 12 })
-    card.appendChild(svg)
-    const saldoCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
-    const taxa = Number(d.taxa_juros || 0)
-    const nextInterestCents = Math.round(saldoCents * (taxa / 100))
+  const card = document.createElement('div')
+  card.className = 'panel'
+  card.style.alignItems = 'center'
+  card.style.textAlign = 'center'
+  card.style.position = 'relative'
+  const title = document.createElement('h4')
+  title.textContent = d.titulo || 'Empréstimo'
+  title.style.marginTop = '0'
+  card.appendChild(title)
+  const svg = createDebtCircleSVG({ principalCents, amortizedCents: amortTotalCents, size: 140, stroke: 12 })
+  card.appendChild(svg)
+  // Saldo devedor em destaque
+  const saldoCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
+  const saldoHighlight = document.createElement('div')
+  saldoHighlight.className = 'saldo-highlight'
+  saldoHighlight.textContent = `Saldo devedor: ${formatBRL(saldoCents)}`
+  card.appendChild(saldoHighlight)
+  const taxa = Number(d.taxa_juros || 0)
+  const nextInterestCents = Math.round(saldoCents * (taxa / 100))
     // Botão Excluir no canto superior direito
     const delBtn = document.createElement('button')
     delBtn.className = 'btn danger'
@@ -612,22 +617,27 @@ async function renderDebtSummary() {
       }
     })
     card.appendChild(delBtn)
-    // Botão Cronograma no canto superior esquerdo
-    const schedBtn = document.createElement('button')
-    schedBtn.className = 'outline'
-    schedBtn.textContent = 'Cronograma'
-    schedBtn.setAttribute('aria-label', 'Abrir cronograma desta dívida')
-    schedBtn.title = 'Abrir cronograma desta dívida'
-    schedBtn.style.position = 'absolute'
-    schedBtn.style.top = '8px'
-    schedBtn.style.left = '8px'
-    schedBtn.style.padding = '4px 10px'
-    schedBtn.style.fontSize = '12px'
-    schedBtn.addEventListener('click', (e) => {
+    // Tornar o card inteiro clicável para abrir o cronograma
+    card.setAttribute('role', 'button')
+    card.setAttribute('tabindex', '0')
+    card.setAttribute('aria-label', 'Abrir cronograma desta dívida')
+    card.title = 'Abrir cronograma desta dívida'
+    card.style.cursor = 'pointer'
+    card.addEventListener('click', (e) => {
+      const t = e.target
+      // Evitar abrir cronograma quando clicar em controles internos
+      if (t.closest('button') || t.closest('input') || t.closest('label') || t.closest('.form-row') || t.closest('.actions')) {
+        return
+      }
       e.preventDefault()
       openDebtScheduleModal(d)
     })
-    card.appendChild(schedBtn)
+    card.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && document.activeElement === card) {
+        e.preventDefault()
+        openDebtScheduleModal(d)
+      }
+    })
     // Pagamento do mês (embutido por empréstimo)
     const payLabel = document.createElement('label')
     payLabel.setAttribute('for', `pay-${d.id}`)

@@ -31,6 +31,14 @@ body {
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
 .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 16px; border-radius: 10px; }
 
+/* Destaque de saldo devedor dentro do card de empréstimo */
+.saldo-highlight {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
 label { display: block; margin-bottom: 12px; font-size: 14px; color: var(--muted); }
 input[type="email"], input[type="password"] {
   width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
