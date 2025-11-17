@@ -238,6 +238,8 @@ body.app-busy main, body.app-busy .container { pointer-events: none; }
 .danger-zone .actions { justify-content: flex-end; }
 body.modal-open { overflow: hidden; }
 .modal input[type="number"] { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.2); color: var(--fg); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+.modal-close { background: transparent; border: 1px solid rgba(255,255,255,0.18); color: var(--fg); width: 36px; height: 36px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
 
 /* Game feel minimalista */
 button { transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease; }

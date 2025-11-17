@@ -4,6 +4,11 @@ import { parseToCents, formatBRL, somarCents, subtrairCents } from './finance.js
 const els = {
   userEmail: document.getElementById('user-email'),
   signoutBtn: document.getElementById('signout-btn'),
+  shareInviteBtn: document.getElementById('share-invite-btn'),
+  shareAcceptBtn: document.getElementById('share-accept-btn'),
+  shareInviteArea: document.getElementById('share-invite-area'),
+  shareInviteInput: document.getElementById('share-invite-input'),
+  shareAcceptConfirmBtn: document.getElementById('share-accept-confirm-btn'),
   navToggle: document.getElementById('nav-toggle'),
   appSidebar: document.getElementById('app-sidebar'),
   sidebarBackdrop: document.querySelector('.sidebar-backdrop'),
@@ -269,6 +274,114 @@ supabase.auth.onAuthStateChange((_event, session) => {
   }
 })
 
+// Compartilhamento (somente leitura): gerar e aceitar convites (top-level)
+els.shareInviteBtn?.addEventListener('click', async (e) => {
+  e.preventDefault()
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.id) {
+      showSnackbar('Sessão não encontrada. Faça login novamente.', null, null, 4000)
+      return
+    }
+    const code = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    const { data, error } = await supabase
+      .from('debt_shares')
+      .insert({ owner_user_id: user.id, code })
+      .select('code')
+      .single()
+    if (error) {
+      console.error('[share] gerar convite error', error)
+      showSnackbar('Falha ao gerar convite.', null, null, 4000)
+      return
+    }
+    const inviteCode = data?.code || code
+    try {
+      await navigator.clipboard.writeText(inviteCode)
+      showSnackbar(`Convite gerado e copiado: ${inviteCode}`, null, null, 6000)
+    } catch {
+      showSnackbar(`Convite gerado: ${inviteCode}`, null, null, 6000)
+    }
+  } catch (err) {
+    console.error('[share] gerar convite unexpected', err)
+    showSnackbar('Erro inesperado ao gerar convite.', null, null, 4000)
+  }
+})
+els.shareAcceptBtn?.addEventListener('click', (e) => {
+  e.preventDefault()
+  try {
+    console.log('[share] click usar convite button')
+    if (!els.shareInviteArea) return
+    const hidden = !els.shareInviteArea.style.display || els.shareInviteArea.style.display === 'none'
+    els.shareInviteArea.style.display = hidden ? 'inline-flex' : 'none'
+    els.shareAcceptBtn?.setAttribute('aria-expanded', hidden ? 'true' : 'false')
+    console.log('[share] invite area display =', els.shareInviteArea.style.display)
+    if (!hidden) {
+      if (els.shareInviteInput) els.shareInviteInput.value = ''
+    } else {
+      els.shareInviteInput?.focus()
+    }
+  } catch (err) {
+    console.error('[share] toggle invite input unexpected', err)
+    showSnackbar('Erro ao abrir área de convite.', null, null, 4000)
+  }
+})
+console.log('[share] accept button listener attached:', !!els.shareAcceptBtn)
+els.shareAcceptConfirmBtn?.addEventListener('click', async (e) => {
+  e.preventDefault()
+  try {
+    const code = els.shareInviteInput?.value || ''
+    const trimmed = code.trim()
+    console.log('[share] confirm invite code length =', trimmed.length)
+    if (!trimmed) {
+      showSnackbar('Informe o código de convite.', null, null, 4000)
+      els.shareInviteInput?.focus()
+      return
+    }
+    const uuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    if (!uuidLike.test(trimmed)) {
+      console.log('[share] invalid invite code format')
+      showSnackbar('Código inválido. Verifique e tente novamente.', null, null, 5000)
+      els.shareInviteInput?.focus()
+      return
+    }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.id) {
+      console.log('[share] no session to accept invite')
+      showSnackbar('Sessão não encontrada. Faça login para aceitar convite.', null, null, 5000)
+      return
+    }
+    console.log('[share] calling RPC accept_debt_share')
+    const { data, error } = await supabase.rpc('accept_debt_share', { p_code: trimmed })
+    if (error) {
+      console.error('[share] aceitar convite error', error)
+      showSnackbar('Falha ao aceitar convite.', null, null, 5000)
+      return
+    }
+    if (data === true) {
+      showSnackbar('Convite aceito. Empréstimos compartilhados visíveis em modo leitura.', null, null, 6000)
+      if (els.shareInviteArea) els.shareInviteArea.style.display = 'none'
+      if (els.shareInviteInput) els.shareInviteInput.value = ''
+      console.log('[share] invite accepted; refreshing debt summary')
+      await renderDebtSummary()
+    } else {
+      console.log('[share] invite code invalid or already used')
+      showSnackbar('Convite inválido ou já utilizado.', null, null, 5000)
+    }
+  } catch (err) {
+    console.error('[share] aceitar convite unexpected', err)
+    showSnackbar('Erro inesperado ao aceitar convite.', null, null, 5000)
+  }
+})
+console.log('[share] confirm button listener attached:', !!els.shareAcceptConfirmBtn)
+els.shareInviteInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    console.log('[share] invite input Enter pressed')
+    els.shareAcceptConfirmBtn?.click()
+  }
+})
+console.log('[share] invite input keydown listener attached:', !!els.shareInviteInput)
+
 // Aguarda INITIAL_SESSION com timeout curto
 function waitForInitialSession(timeoutMs = 3000) {
   return new Promise(async (resolve) => {
@@ -428,8 +541,7 @@ async function fetchAllDividasForUser() {
   if (!userId) return []
   const { data, error } = await supabase
     .from('dividas')
-    .select('id, titulo, valor_principal, taxa_juros, periodo_juros, data_inicio, status, created_at')
-    .eq('user_id', userId)
+    .select('id, user_id, titulo, valor_principal, taxa_juros, periodo_juros, data_inicio, status, created_at')
     .order('created_at', { ascending: false })
   if (error) {
     console.error('[emp] fetchAllDividasForUser error', error)
@@ -562,6 +674,7 @@ async function renderDebtSummary() {
   if (!container) return
   container.innerHTML = ''
   const dividas = await fetchAllDividasForUser()
+  const activeUserId = await getActiveUserId()
   if (!dividas.length) {
     const p = document.createElement('p')
     p.className = 'sub'
@@ -570,9 +683,14 @@ async function renderDebtSummary() {
     return
   }
   for (const d of dividas) {
+    const isOwner = d.user_id === activeUserId
     const pays = await fetchPagamentosForDebt(d.id)
     const amortTotalCents = pays.reduce((acc, p) => acc + Math.round(Number(p.principal_amortizado || 0) * 100), 0)
     const principalCents = Math.round(Number(d.valor_principal || 0) * 100)
+    const residualBaseCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
+    const taxa = Number(d.taxa_juros || 0)
+    const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct: taxa, pays, debtId: d.id })
+    const baseCents = Number.isFinite(cap.residualCentsDisplay) ? cap.residualCentsDisplay : residualBaseCents
   const card = document.createElement('div')
   card.className = 'panel'
   card.style.alignItems = 'center'
@@ -582,16 +700,21 @@ async function renderDebtSummary() {
   title.textContent = d.titulo || 'Empréstimo'
   title.style.marginTop = '0'
   card.appendChild(title)
+  if (!isOwner) {
+    const ro = document.createElement('p')
+    ro.className = 'sub'
+    ro.textContent = 'Somente leitura (compartilhado)'
+    ro.style.marginTop = '-6px'
+    card.appendChild(ro)
+  }
   const svg = createDebtCircleSVG({ principalCents, amortizedCents: amortTotalCents, size: 140, stroke: 12 })
   card.appendChild(svg)
   // Saldo devedor em destaque
-  const saldoCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
   const saldoHighlight = document.createElement('div')
   saldoHighlight.className = 'saldo-highlight'
-  saldoHighlight.textContent = `Saldo devedor: ${formatBRL(saldoCents)}`
+  saldoHighlight.textContent = `Saldo devedor: ${formatBRL(baseCents)}`
   card.appendChild(saldoHighlight)
-  const taxa = Number(d.taxa_juros || 0)
-  const nextInterestCents = Math.round(saldoCents * (taxa / 100))
+  const nextInterestCents = Math.round(baseCents * (taxa / 100))
     // Botão Excluir no canto superior direito
     const delBtn = document.createElement('button')
     delBtn.className = 'btn danger'
@@ -603,6 +726,10 @@ async function renderDebtSummary() {
     delBtn.style.right = '8px'
     delBtn.style.padding = '4px 10px'
     delBtn.style.fontSize = '12px'
+    if (!isOwner) {
+      delBtn.disabled = true
+      delBtn.title = 'Ação desabilitada em modo somente leitura'
+    }
     delBtn.addEventListener('click', async () => {
       const promptRes = await promptDeleteCredentials()
       if (!promptRes?.ok || !promptRes.pwd) return
@@ -658,6 +785,11 @@ async function renderDebtSummary() {
     payBtn.className = 'btn-primary'
     payBtn.setAttribute('aria-label', 'Registrar pagamento do mês')
     payBtn.textContent = 'Registrar pagamento'
+    if (!isOwner) {
+      payInput.disabled = true
+      payBtn.disabled = true
+      payBtn.title = 'Ação desabilitada em modo somente leitura'
+    }
     payBtn.addEventListener('click', async (e) => {
       e.preventDefault()
       const totalPagoCents = parseToCents(payInput.value)
@@ -697,6 +829,10 @@ async function renderDebtSummary() {
       undoBtn.disabled = true
       undoBtn.title = 'Não há pagamentos para desfazer'
     }
+    if (!isOwner) {
+      undoBtn.disabled = true
+      undoBtn.title = 'Ação desabilitada em modo somente leitura'
+    }
     undoBtn.addEventListener('click', async () => {
       const ok = window.confirm('Remover o último pagamento desta dívida?')
       if (!ok) return
@@ -710,7 +846,8 @@ async function renderDebtSummary() {
         console.error('[emp] deleteLastPagamentoForDebt error', res?.error)
         showSnackbar('Erro ao desfazer pagamento. Tente novamente.', null, null, 5000)
       }
-    })
+})
+
     undoActions.appendChild(undoBtn)
     card.appendChild(undoActions)
     container.appendChild(card)
@@ -1337,7 +1474,10 @@ function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId
     const rate = Number(ratePct || 0)
     const key = `loan:lastCapYm:${debtId || 'local'}`
     const lastCapYm = localStorage.getItem(key) || null
-    const monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : [currentYm]
+    let monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : [currentYm]
+    if (!monthsToProcess.length) {
+      monthsToProcess = [currentYm]
+    }
     const trend = []
     const breakdown = []
     for (const ym of monthsToProcess) {
@@ -1346,14 +1486,14 @@ function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId
       const expected = Math.round(baseBefore * (rate / 100))
       const paid = sumInterestPaidForMonth(pays, ym)
       const unpaid = Math.max(0, expected - paid)
-      if (!isCurrent || day >= 5) {
+      if (!isCurrent || day > 5) {
         base = baseBefore + unpaid
       } else {
         base = baseBefore // antes do dia 05 do mês corrente, apenas projetamos
       }
       const baseAfter = base
       trend.push({ ym, residualCents: baseAfter })
-      breakdown.push({ ym, baseBefore, expected, paid, capitalized: (!isCurrent || day >= 5) ? unpaid : 0, baseAfter })
+      breakdown.push({ ym, baseBefore, expected, paid, capitalized: (!isCurrent || day > 5) ? unpaid : 0, baseAfter })
     }
     if (monthsToProcess.length) localStorage.setItem(key, currentYm)
     return { residualCentsDisplay: base, residualTrend: trend, capitalizationBreakdown: breakdown }
@@ -1365,7 +1505,16 @@ function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId
 function renderBalanceSparklineSVG(trend = []) {
   try {
     const pts = Array.isArray(trend) ? trend : []
-    if (pts.length < 2) return ''
+    if (pts.length < 1) return ''
+    if (pts.length === 1) {
+      const w = 260, h = 56
+      const x = Math.round(w / 2), y = Math.round(h / 2)
+      return `
+        <svg class="sparkline" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+          <circle cx="${x}" cy="${y}" r="3" fill="var(--accent)" />
+        </svg>
+      `
+    }
     const w = 260, h = 56, pad = 6
     const values = pts.map(p => Number(p.residualCents || 0))
     const min = Math.min(...values)
@@ -1395,7 +1544,7 @@ function renderWaterfallSVG(breakdown = []) {
     const max = Math.max(...values, 1)
     const toX = (i) => pad + i * 24
     const toH = (v) => Math.round(((v) / max) * (h - pad * 2))
-    let svg = `<svg class="waterfall" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-label="Capitalização mensal">`
+    let svg = `<svg class="waterfall" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-label="Juros somados ao saldo (mensal)">`
     svg += `<line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}" stroke="var(--border)" stroke-width="1" />`
     rows.forEach((r, i) => {
       const x = toX(i)
@@ -1412,7 +1561,7 @@ function renderWaterfallSVG(breakdown = []) {
       }
       const capBRL = formatBRL(Number(r.capitalized || 0))
       const ym = r.ym || ''
-      svg += `<title>${ym}: Capitalizado ${capBRL}</title>`
+      svg += `<title>${ym}: Juros somados ao saldo ${capBRL}</title>`
     })
     svg += '</svg>'
     return svg
@@ -1438,11 +1587,11 @@ function applyMonthlyCapitalizationIfDue() {
       const isCurrent = ym === currentYm
       const baseBefore = base
       let expected = 0, paid = 0, unpaid = 0
-      if (!isCurrent || day >= 5) {
+      if (!isCurrent || day > 5) {
         expected = Math.round(baseBefore * (rate / 100))
         paid = sumInterestPaidForMonth(pays, ym)
         unpaid = Math.max(0, expected - paid)
-        base = unpaid > 0 ? (baseBefore + unpaid) : baseBefore
+        base = baseBefore + unpaid
       } else {
         expected = Math.round(baseBefore * (rate / 100))
         paid = sumInterestPaidForMonth(pays, ym)
@@ -1467,61 +1616,188 @@ async function openDebtScheduleModal(d) {
     const pays = await fetchPagamentosForDebt(d.id)
     const principalCents = Math.round(Number(d.valor_principal || 0) * 100)
     const ratePct = Number(d.taxa_juros || 0)
+    
     // Reconstruir schedule (residual após amortização)
     let residualTracker = principalCents
     const sched = pays.map((p, idx) => {
       const juros = Math.round(Number(p.juros_pago || 0) * 100)
       const amort = Math.round(Number(p.principal_amortizado || 0) * 100)
       residualTracker = Math.max(0, subtrairCents(residualTracker, amort))
-      return { mes: idx + 1, jurosCents: juros, amortCents: amort, residualCents: residualTracker }
+      return { 
+        mes: idx + 1, 
+        jurosCents: juros, 
+        amortCents: amort, 
+        residualCents: residualTracker,
+        dataPagamento: p.data_pagamento,
+        createdAt: p.created_at
+      }
     })
+    
     const amortTotalCents = sched.reduce((acc, it) => acc + it.amortCents, 0)
     const residualBaseCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
+    
     // Capitalização específica desta dívida
     const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId: d.id })
     const baseCents = Number.isFinite(cap.residualCentsDisplay) ? cap.residualCentsDisplay : residualBaseCents
     const nextInterestCents = Math.round(baseCents * (ratePct / 100))
 
-    // Construir modal com schedule
+    // Identificar meses com capitalização
+    const mesesComCapitalizacao = new Set()
+    if (cap.capitalizationBreakdown) {
+      cap.capitalizationBreakdown.forEach(item => {
+        if (item.capitalized > 0) {
+          mesesComCapitalizacao.add(item.ym)
+        }
+      })
+    }
+
+    // Criar modal com visualização de capitalização - DESIGN PROFISSIONAL
     const modal = document.createElement('div')
     modal.className = 'modal open'
     modal.setAttribute('role', 'dialog')
     modal.setAttribute('aria-modal', 'true')
+    
     const backdrop = document.createElement('div')
     backdrop.className = 'modal-backdrop'
     backdrop.dataset.close = 'schedule'
+    
     const dlg = document.createElement('div')
     dlg.className = 'modal-dialog schedule-dialog'
+    
+    // Header do modal com design profissional
+    const modalHeader = document.createElement('div')
+    modalHeader.className = 'modal-header'
+    
+    const titleContainer = document.createElement('div')
+    titleContainer.style.display = 'flex'
+    titleContainer.style.alignItems = 'center'
+    titleContainer.style.gap = '12px'
+    
     const title = document.createElement('h3')
-    title.textContent = 'Cronograma do empréstimo'
-    dlg.appendChild(title)
+    title.textContent = 'Cronograma do Empréstimo'
+    title.style.margin = '0'
+    title.style.fontSize = 'var(--text-xl)'
+    title.style.fontWeight = '700'
+    title.style.color = 'var(--primary-300)'
+    
+    if (mesesComCapitalizacao.size > 0) {
+      const capBadge = document.createElement('span')
+      capBadge.className = 'chip chip-warning'
+      capBadge.textContent = `${mesesComCapitalizacao.size} capitalização${mesesComCapitalizacao.size > 1 ? 'ões' : 'ão'}`
+      titleContainer.appendChild(title)
+      titleContainer.appendChild(capBadge)
+    } else {
+      titleContainer.appendChild(title)
+    }
+    
+    const closeBtn = document.createElement('button')
+    closeBtn.className = 'modal-close'
+    closeBtn.innerHTML = '✕'
+    closeBtn.addEventListener('click', () => {
+      document.body.classList.remove('modal-open')
+      modal.remove()
+    })
+    
+    modalHeader.appendChild(titleContainer)
+    modalHeader.appendChild(closeBtn)
+    dlg.appendChild(modalHeader)
+
+    // Conteúdo do modal com design profissional
+    const modalContent = document.createElement('div')
+    modalContent.className = 'modal-content'
+
+    // Header com informações de capitalização - DESIGN PROFISSIONAL
     const headerHtml = `
       <div class="schedule-head" role="region" aria-label="Resumo do empréstimo">
         <div class="summary">
-          <span class="label">Saldo devedor</span>
-          <span class="value">${formatBRL(baseCents)}</span>
-          <span class="spacer" aria-hidden="true"></span>
-          <span class="label">Taxa mensal</span>
-          <span class="value">${Number(ratePct || 0).toFixed(2)}%</span>
+          <div class="summary-item">
+            <span class="label">Saldo devedor</span>
+            <span class="value">${formatBRL(baseCents)}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Taxa mensal</span>
+            <span class="value">${Number(ratePct || 0).toFixed(2)}%</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Próximo juros</span>
+            <span class="chip chip-interest">${formatBRL(nextInterestCents)}</span>
+          </div>
         </div>
-        <div class="next">
-          <span class="label">Próximo juros</span>
-          <span class="chip chip-interest">${formatBRL(nextInterestCents)}</span>
-        </div>
+        
+        ${cap.capitalizationBreakdown && cap.capitalizationBreakdown.length > 0 ? `
+          <div class="capitalization-info">
+            <h4>📈 Juros do mês</h4>
+            <div class="cap-timeline">
+              ${cap.capitalizationBreakdown.map(item => `
+                <div class="cap-item" style="margin: 8px 0; display: grid; gap: 8px; align-items: start; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                  <span style="font-size: 14px; font-weight: 600;">📅 ${item.ym}</span>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <span class="chip chip-interest">Juros do mês ${formatBRL(item.expected || 0)}</span>
+                    <span class="chip">Pago ${formatBRL(item.paid || 0)}</span>
+                    <span class="chip chip-interest">${item.capitalized > 0 ? `Entrou no saldo ${formatBRL(item.capitalized)}` : 'Entrou no saldo R$ 0,00'}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
         <div class="trend" aria-label="Tendência do saldo">${renderBalanceSparklineSVG(cap.residualTrend || [])}</div>
         <div class="waterfall-wrap" aria-label="Capitalização do mês">${renderWaterfallSVG(cap.capitalizationBreakdown || [])}</div>
       </div>
     `
-    const rowsHtml = sched.map((it) => `
-      <tr>
-        <td class="col-mes">${it.mes}</td>
-        <td class="col-juros"><span class="chip chip-interest">${formatBRL(it.jurosCents || 0)}</span></td>
-        <td class="col-amort"><span class="chip chip-amort">${formatBRL(it.amortCents || 0)}</span></td>
-        <td class="col-saldo">${formatBRL(it.residualCents || 0)}</td>
-      </tr>
-    `).join('')
-    const tableHtml = `
-      <div class="schedule-scroll scroll-lock" aria-label="Cronograma de pagamentos">
+
+    modalContent.innerHTML = headerHtml
+    dlg.appendChild(modalContent)
+
+    // Footer do modal
+    const modalFooter = document.createElement('div')
+    modalFooter.className = 'modal-footer'
+    
+    const closeBtnFooter = document.createElement('button')
+    closeBtnFooter.className = 'outline'
+    closeBtnFooter.textContent = 'Fechar'
+    closeBtnFooter.addEventListener('click', () => {
+      document.body.classList.remove('modal-open')
+      modal.remove()
+    })
+    
+    modalFooter.appendChild(closeBtnFooter)
+    dlg.appendChild(modalFooter)
+
+    // Tabela com indicadores de capitalização - DESIGN PROFISSIONAL
+    const rowsHtml = sched.map((it, idx) => {
+      const mesYm = ymStr(getFortalezaParts(it.dataPagamento ? new Date(it.dataPagamento) : new Date(it.createdAt)))
+      const teveCapitalizacao = mesesComCapitalizacao.has(mesYm)
+      const capitalizadoCents = cap.capitalizationBreakdown?.find(item => item.ym === mesYm)?.capitalized || 0
+      
+      return `
+        <tr class="${teveCapitalizacao ? 'row-capitalization' : ''}">
+          <td class="col-mes">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 600;">${it.mes}</span>
+              ${teveCapitalizacao ? '<span style="color: #F59E0B;">📈</span>' : ''}
+            </div>
+          </td>
+          <td class="col-juros">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span class="chip chip-interest">${formatBRL(it.jurosCents || 0)}</span>
+              ${capitalizadoCents > 0 ? `<small style="color: #F59E0B; font-size: 11px; font-weight: 500;">+${formatBRL(capitalizadoCents)} no saldo</small>` : ''}
+            </div>
+          </td>
+          <td class="col-amort">
+            <span class="chip chip-amort">${formatBRL(it.amortCents || 0)}</span>
+          </td>
+          <td class="col-saldo">
+            <span style="font-weight: 600; color: var(--primary-300);">${formatBRL(it.residualCents || 0)}</span>
+          </td>
+        </tr>
+      `
+    }).join('')
+
+    const tableSection = document.createElement('div')
+    tableSection.innerHTML = `
+      <div class="schedule-scroll" aria-label="Cronograma de pagamentos" style="margin-top: var(--spacing-lg);">
         <table class="schedule-table">
           <thead>
             <tr>
@@ -1537,33 +1813,43 @@ async function openDebtScheduleModal(d) {
         </table>
       </div>
     `
-    const contentWrap = document.createElement('div')
-    contentWrap.innerHTML = headerHtml + tableHtml
-    dlg.appendChild(contentWrap)
-    const actions = document.createElement('div')
-    actions.className = 'actions'
-    const closeBtn = document.createElement('button')
-    closeBtn.className = 'outline'
-    closeBtn.textContent = 'Fechar'
-    closeBtn.addEventListener('click', () => {
-      document.body.classList.remove('modal-open')
-      modal.remove()
-    })
-    actions.appendChild(closeBtn)
-    dlg.appendChild(actions)
-    modal.appendChild(backdrop)
-    modal.appendChild(dlg)
-    document.body.appendChild(modal)
-    document.body.classList.add('modal-open')
-    // fechar ao clicar backdrop
+    modalContent.appendChild(tableSection)
+
+    // Adicionar gráfico temporal de capitalização - DESIGN PROFISSIONAL
+    if (cap.capitalizationBreakdown && cap.capitalizationBreakdown.length >= 1) {
+      const timelineSection = document.createElement('div')
+      timelineSection.className = 'timeline-chart'
+      timelineSection.innerHTML = `
+        <h4>📊 Linha do tempo: juros no saldo</h4>
+        <div class="timeline-bars">
+          ${cap.capitalizationBreakdown.map(item => {
+            const height = Math.max(15, Math.min(70, (item.capitalized / 1000) * 4))
+            return `
+              <div class="timeline-bar">
+                <div class="bar" style="height: ${height}px; background: ${item.capitalized > 0 ? '#F59E0B' : 'var(--gray-600)'};"></div>
+                <div class="label">${item.ym}</div>
+                <div class="value" style="color: ${item.capitalized > 0 ? '#F59E0B' : 'var(--gray-500)'};">${item.capitalized > 0 ? formatBRL(item.capitalized) : '-'}</div>
+              </div>
+            `
+          }).join('')}
+        </div>
+      `
+      modalContent.appendChild(timelineSection)
+    }
+    // Event listeners para fechar
     backdrop.addEventListener('click', () => {
       document.body.classList.remove('modal-open')
       modal.remove()
     })
-    const sd = dlg.querySelector('.schedule-scroll') || dlg.querySelector('.schedule-table')
+    
+    // Scroll lock para elementos
+    const sd = modalContent.querySelector('.schedule-scroll')
     if (sd) ensureScrollLock(sd)
-    const md = dlg
-    if (md && typeof fitModalDialogToViewport === 'function') fitModalDialogToViewport(md)
+    modal.appendChild(backdrop)
+    modal.appendChild(dlg)
+    document.body.appendChild(modal)
+    try { document.body.classList.add('modal-open') } catch {}
+    
   } catch (err) {
     console.error('[emp] openDebtScheduleModal error', err)
   }

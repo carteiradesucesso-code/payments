@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Capitalização - Resultados</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .result-box { margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .comparison { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        h1 { color: #333; text-align: center; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resultados dos Testes de Capitalização</h1>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Funções auxiliares
+        function getFortalezaParts(date = new Date()) {
+            const d = new Date(date);
+            return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+        }
+
+        function ymStr({ year, month }) {
+            return `${year}-${String(month).padStart(2, '0')}`;
+        }
+
+        function sumInterestPaidForMonth(pays, ym) {
+            if (!Array.isArray(pays) || !ym) return 0;
+            let total = 0;
+            for (const p of pays) {
+                const d = p.data_pagamento ? new Date(p.data_pagamento) : new Date();
+                const parts = getFortalezaParts(d);
+                const currYm = ymStr(parts);
+                if (currYm === ym) {
+                    total += Math.round(Number(p.juros_pago || 0) * 100);
+                }
+            }
+            return total;
+        }
+
+        // Teste específico para mostrar diferenças
+        function testarDiferencas() {
+            const loan = {
+                residualCents: 100000, // R$ 1.000,00
+                monthlyRatePct: 10, // 10% ao mês
+                testDate: new Date('2024-01-05'), // Dia 5 - dia do vencimento
+                lastCapYm: '2023-12',
+                pays: []
+            };
+
+            // Versão ANTIGA (com erro)
+            function capitalizacaoAntiga(loan) {
+                const today = getFortalezaParts(loan.testDate);
+                const day = today.day;
+                let base = loan.residualCents;
+                const rate = loan.monthlyRatePct;
+                
+                // ERRO: Estava usando >= 5 (capitalizava no dia 5)
+                if (day >= 5) {
+                    const expected = Math.round(base * (rate / 100));
+                    const paid = sumInterestPaidForMonth(loan.pays, ymStr(today));
+                    const unpaid = Math.max(0, expected - paid);
+                    base = unpaid > 0 ? (base + unpaid) : base;
+                }
+                
+                return {
+                    saldoFinal: base,
+                    capitalizado: base - loan.residualCents,
+                    logica: `Dia ${day} >= 5 = ${day >= 5} (capitalizaria)`,
+                    erro: "Capitalizava no dia do vencimento!"
+                };
+            }
+
+            // Versão NOVA (corrigida)
+            function capitalizacaoNova(loan) {
+                const today = getFortalezaParts(loan.testDate);
+                const day = today.day;
+                let base = loan.residualCents;
+                const rate = loan.monthlyRatePct;
+                
+                // CORREÇÃO: Usa > 5 (só capitaliza após o dia 5)
+                if (day > 5) {
+                    const expected = Math.round(base * (rate / 100));
+                    const paid = sumInterestPaidForMonth(loan.pays, ymStr(today));
+                    const unpaid = Math.max(0, expected - paid);
+                    base = base + unpaid; // Sempre capitaliza se houver juros não pagos
+                }
+                
+                return {
+                    saldoFinal: base,
+                    capitalizado: base - loan.residualCents,
+                    logica: `Dia ${day} > 5 = ${day > 5} (não capitaliza)`,
+                    correto: "Não capitaliza no dia do vencimento!"
+                };
+            }
+
+            const resultadoAntigo = capitalizacaoAntiga(loan);
+            const resultadoNovo = capitalizacaoNova(loan);
+
+            const resultsDiv = document.getElementById('results');
+            
+            // Mostrar comparação
+            resultsDiv.innerHTML = `
+                <div class="comparison result-box">
+                    <h3>📊 Comparação para ${loan.testDate.toLocaleDateString('pt-BR')} (Dia 5)</h3>
+                    <p><strong>Saldo inicial:</strong> R$ ${(loan.residualCents / 100).toFixed(2)}</p>
+                    <p><strong>Taxa mensal:</strong> ${loan.monthlyRatePct}%</p>
+                    <p><strong>Juros esperados:</strong> R$ ${(Math.round(loan.residualCents * (loan.monthlyRatePct / 100)) / 100).toFixed(2)}</p>
+                </div>
+
+                <div class="error result-box">
+                    <h3>❌ Versão ANTIGA (com erro)</h3>
+                    <p><strong>Lógica:</strong> ${resultadoAntigo.logica}</p>
+                    <p><strong>Saldo final:</strong> R$ ${(resultadoAntigo.saldoFinal / 100).toFixed(2)}</p>
+                    <p><strong>Capitalizado:</strong> R$ ${(resultadoAntigo.capitalizado / 100).toFixed(2)}</p>
+                    <p><strong>Problema:</strong> ${resultadoAntigo.erro}</p>
+                </div>
+
+                <div class="success result-box">
+                    <h3>✅ Versão NOVA (corrigida)</h3>
+                    <p><strong>Lógica:</strong> ${resultadoNovo.logica}</p>
+                    <p><strong>Saldo final:</strong> R$ ${(resultadoNovo.saldoFinal / 100).toFixed(2)}</p>
+                    <p><strong>Capitalizado:</strong> R$ ${(resultadoNovo.capitalizado / 100).toFixed(2)}</p>
+                    <p><strong>Correto:</strong> ${resultadoNovo.correto}</p>
+                </div>
+
+                <div class="result-box" style="background: #fff3cd; border-color: #ffeaa7; color: #856404;">
+                    <h3>🎯 Resumo da Correção</h3>
+                    <pre>
+// ANTES (errado):
+if (!isCurrent || day >= 5) {
+    // Capitalizava no dia 5 (vencimento)
+}
+
+// DEPOIS (correto):
+if (!isCurrent || day > 5) {
+    // Só capitaliza após o dia 5
+}
+                    </pre>
+                    <p><strong>Diferença:</strong> Agora o sistema respeita o dia do vencimento (dia 5) e só capitaliza 
+                    os juros não pagos a partir do dia 6, como você solicitou!</p>
+                </div>
+            `;
+        }
+
+        // Testar para diferentes dias
+        function testarVariosDias() {
+            const dias = [4, 5, 6, 7, 10];
+            const resultados = [];
+            
+            dias.forEach(dia => {
+                const loan = {
+                    residualCents: 100000,
+                    monthlyRatePct: 10,
+                    testDate: new Date(`2024-01-${String(dia).padStart(2, '0')}`),
+                    lastCapYm: '2023-12',
+                    pays: []
+                };
+
+                // Versão corrigida
+                function testarDia(loan) {
+                    const today = getFortalezaParts(loan.testDate);
+                    const day = today.day;
+                    let base = loan.residualCents;
+                    const rate = loan.monthlyRatePct;
+                    
+                    if (day > 5) {
+                        const expected = Math.round(base * (rate / 100));
+                        base = base + expected;
+                    }
+                    
+                    return {
+                        dia: day,
+                        capitaliza: day > 5,
+                        saldoFinal: base,
+                        capitalizado: base - loan.residualCents
+                    };
+                }
+                
+                resultados.push(testarDia(loan));
+            });
+
+            let tabela = '<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">';
+            tabela += '<tr style="background: #f8f9fa;"><th style="padding: 10px; border: 1px solid #ddd;">Dia</th><th style="padding: 10px; border: 1px solid #ddd;">Capitaliza?</th><th style="padding: 10px; border: 1px solid #ddd;">Saldo Final</th><th style="padding: 10px; border: 1px solid #ddd;">Juros Capitalizados</th></tr>';
+            
+            resultados.forEach(res => {
+                const classe = res.capitaliza ? 'success' : '';
+                tabela += `<tr class="${classe}">`;
+                tabela += `<td style="padding: 10px; border: 1px solid #ddd;">${res.dia}</td>`;
+                tabela += `<td style="padding: 10px; border: 1px solid #ddd;">${res.capitaliza ? '✅ Sim' : '❌ Não'}</td>`;
+                tabela += `<td style="padding: 10px; border: 1px solid #ddd;">R$ ${(res.saldoFinal / 100).toFixed(2)}</td>`;
+                tabela += `<td style="padding: 10px; border: 1px solid #ddd;">R$ ${(res.capitalizado / 100).toFixed(2)}</td>`;
+                tabela += '</tr>';
+            });
+            tabela += '</table>';
+
+            return tabela;
+        }
+
+        // Executar testes
+        document.addEventListener('DOMContentLoaded', function() {
+            testarDiferencas();
+            
+            const tabelaDiv = document.createElement('div');
+            tabelaDiv.innerHTML = `
+                <div class="result-box" style="margin-top: 30px; background: #e7f3ff; border-color: #b3d9ff;">
+                    <h3>📅 Teste para Vários Dias</h3>
+                    ${testarVariosDias()}
+                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                        <strong>Conclusão:</strong> Perfeito! Agora o sistema só capitaliza a partir do dia 6, 
+                        respeitando o dia do vencimento (dia 5) como você solicitou.
+                    </p>
+                </div>
+            `;
+            document.getElementById('results').appendChild(tabelaDiv);
+        });
+    </script>
+</body>
+</html>

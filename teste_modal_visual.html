@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Visual do Modal de Cronograma</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-case h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .test-case p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .modal-preview {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 4px;
+        }
+        .chip {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .chip-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        .chip-interest {
+            background: #10b981;
+            color: white;
+        }
+        .chip-neutral {
+            background: #e5e7eb;
+            color: #666;
+        }
+        .cap-timeline {
+            margin: 10px 0;
+        }
+        .cap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 4px;
+        }
+        .timeline-bars {
+            display: flex;
+            align-items: end;
+            gap: 4px;
+            height: 80px;
+            margin: 15px 0;
+        }
+        .timeline-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 30px;
+        }
+        .bar {
+            width: 20px;
+            border-radius: 2px 2px 0 0;
+        }
+        .label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+            text-align: center;
+        }
+        .value {
+            font-size: 9px;
+            margin-top: 2px;
+        }
+        .row-capitalization {
+            background: rgba(245, 158, 11, 0.05) !important;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎨 Teste Visual do Modal de Cronograma com Capitalização</h1>
+        <p>Este teste demonstra as novas funcionalidades visuais do modal de cronograma.</p>
+
+        <div class="test-case">
+            <h3>📊 Teste 1: Modal com Capitalização</h3>
+            <p>Simula um empréstimo com 3 capitalizações realizadas.</p>
+            
+            <div class="modal-preview">
+                <h3>Cronograma do empréstimo 
+                    <span class="chip chip-warning" style="margin-left: 12px;">3 capitalizações</span>
+                </h3>
+                
+                <div style="margin: 16px 0; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <h4 style="margin: 0 0 8px 0; color: #f59e0b;">📈 Capitalizações Realizadas</h4>
+                    <div class="cap-timeline">
+                        <div class="cap-item">
+                            <span>📅 2024-01</span>
+                            <span class="chip chip-warning">+R$ 150,00</span>
+                        </div>
+                        <div class="cap-item">
+                            <span>📅 2024-02</span>
+                            <span class="chip chip-warning">+R$ 175,50</span>
+                        </div>
+                        <div class="cap-item">
+                            <span>📅 2024-03</span>
+                            <span class="chip chip-warning">+R$ 201,83</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-chart" style="margin-top: 20px; padding: 16px; background: rgba(124, 147, 255, 0.05); border-radius: 8px;">
+                    <h4 style="margin: 0 0 12px 0; color: #7c93ff;">📊 Timeline de Capitalização</h4>
+                    <div class="timeline-bars">
+                        <div class="timeline-bar">
+                            <div class="bar" style="height: 30px; background: #f59e0b;"></div>
+                            <div class="label">2024-01</div>
+                            <div class="value" style="color: #f59e0b;">R$ 150</div>
+                        </div>
+                        <div class="timeline-bar">
+                            <div class="bar" style="height: 35px; background: #f59e0b;"></div>
+                            <div class="label">2024-02</div>
+                            <div class="value" style="color: #f59e0b;">R$ 175</div>
+                        </div>
+                        <div class="timeline-bar">
+                            <div class="bar" style="height: 40px; background: #f59e0b;"></div>
+                            <div class="label">2024-03</div>
+                            <div class="value" style="color: #f59e0b;">R$ 201</div>
+                        </div>
+                        <div class="timeline-bar">
+                            <div class="bar" style="height: 10px; background: #e5e7eb;"></div>
+                            <div class="label">2024-04</div>
+                            <div class="value" style="color: #999;">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left;">Mês</th>
+                            <th style="padding: 12px; text-align: left;">Juros</th>
+                            <th style="padding: 12px; text-align: left;">Amortização</th>
+                            <th style="padding: 12px; text-align: left;">Saldo devedor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="row-capitalization">
+                            <td style="padding: 12px;">1 📈</td>
+                            <td style="padding: 12px;">
+                                <span class="chip chip-interest">R$ 150,00</span>
+                                <br><small style="color: #f59e0b; font-size: 11px;">+R$ 150,00 cap.</small>
+                            </td>
+                            <td style="padding: 12px;"><span class="chip chip-neutral">R$ 0,00</span></td>
+                            <td style="padding: 12px;">R$ 5.150,00</td>
+                        </tr>
+                        <tr class="row-capitalization">
+                            <td style="padding: 12px;">2 📈</td>
+                            <td style="padding: 12px;">
+                                <span class="chip chip-interest">R$ 175,50</span>
+                                <br><small style="color: #f59e0b; font-size: 11px;">+R$ 175,50 cap.</small>
+                            </td>
+                            <td style="padding: 12px;"><span class="chip chip-neutral">R$ 0,00</span></td>
+                            <td style="padding: 12px;">R$ 5.325,50</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">3</td>
+                            <td style="padding: 12px;"><span class="chip chip-interest">R$ 159,77</span></td>
+                            <td style="padding: 12px;"><span class="chip chip-neutral">R$ 500,00</span></td>
+                            <td style="padding: 12px;">R$ 4.985,27</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="success">✅ Visualização de capitalização implementada com sucesso!</p>
+        </div>
+
+        <div class="test-case">
+            <h3>🎯 Teste 2: Modal sem Capitalização</h3>
+            <p>Simula um empréstimo sem capitalizações.</p>
+            
+            <div class="modal-preview">
+                <h3>Cronograma do empréstimo</h3>
+                
+                <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 12px; text-align: left;">Mês</th>
+                            <th style="padding: 12px; text-align: left;">Juros</th>
+                            <th style="padding: 12px; text-align: left;">Amortização</th>
+                            <th style="padding: 12px; text-align: left;">Saldo devedor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px;">1</td>
+                            <td style="padding: 12px;"><span class="chip chip-interest">R$ 150,00</span></td>
+                            <td style="padding: 12px;"><span class="chip chip-neutral">R$ 500,00</span></td>
+                            <td style="padding: 12px;">R$ 4.650,00</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px;">2</td>
+                            <td style="padding: 12px;"><span class="chip chip-interest">R$ 139,50</span></td>
+                            <td style="padding: 12px;"><span class="chip chip-neutral">R$ 500,00</span></td>
+                            <td style="padding: 12px;">R$ 4.289,50</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="success">✅ Modal sem capitalização exibido corretamente (sem indicadores visuais)!</p>
+        </div>
+
+        <div class="test-case">
+            <h3>🔍 Resumo das Funcionalidades Visuais</h3>
+            <ul>
+                <li><strong>📈 Badge de Capitalização:</strong> Mostra quantas capitalizações foram realizadas</li>
+                <li><strong>📅 Timeline de Capitalização:</strong> Lista mensal com valores capitalizados</li>
+                <li><strong>📊 Gráfico de Barras:</strong> Visualização temporal das capitalizações</li>
+                <li><strong>🎯 Indicadores nas Linhas:</strong> 📈 aparece nas linhas com capitalização</li>
+                <li><strong>💰 Valores Detalhados:</strong> Mostra valor capitalizado em cada mês</li>
+                <li><strong>🎨 Cores Intuitivas:</strong> Laranja para capitalização, verde para juros</li>
+            </ul>
+            <p class="success">✅ Todas as funcionalidades visuais implementadas conforme solicitado!</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug do Modal de Cronograma</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .debug-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        .code-block {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .test-data {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Debug do Modal de Cronograma - Problema do Gráfico</h1>
+        
+        <div class="debug-section">
+            <h3>🚨 Problema Identificado</h3>
+            <p>O gráfico <strong class="error">NÃO</strong> aparece porque a condição está muito restritiva!</p>
+            
+            <div class="code-block">
+// CÓDIGO ATUAL (LINHA 1742)
+const timelineChartHtml = cap.capitalizationBreakdown && cap.capitalizationBreakdown.length > 1 ? `
+  &lt;div class="timeline-chart"&gt;...&lt;/div&gt;
+` : ''
+            </div>
+            
+            <p class="warning">⚠️ O gráfico só aparece se houver <strong>mais de 1</strong> capitalização!</p>
+            <p>Mesmo que haja 1 capitalização, o gráfico não será exibido.</p>
+        </div>
+
+        <div class="debug-section">
+            <h3>✅ Solução Proposta</h3>
+            <p>Mude a condição para mostrar o gráfico sempre que houver pelo menos 1 capitalização:</p>
+            
+            <div class="code-block">
+// CÓDIGO CORRIGIDO
+const timelineChartHtml = cap.capitalizationBreakdown && cap.capitalizationBreakdown.length >= 1 ? `
+  &lt;div class="timeline-chart"&gt;...&lt;/div&gt;
+` : ''
+            </div>
+            
+            <p class="success">✅ Assim o gráfico aparecerá mesmo com apenas 1 capitalização!</p>
+        </div>
+
+        <div class="debug-section">
+            <h3>📊 Teste de Dados Simulados</h3>
+            <p>Veja como ficaria com diferentes quantidades de capitalizações:</p>
+            
+            <div class="test-data">
+                <h4>Teste 1: 1 capitalização (atualmente NÃO mostra gráfico)</h4>
+                <div class="code-block">
+capitalizationBreakdown: [
+  { ym: '2024-01', capitalized: 15000 }
+]
+// length = 1 → condição &gt; 1 = FALSE → ❌ Não mostra gráfico
+                </div>
+            </div>
+            
+            <div class="test-data">
+                <h4>Teste 2: 2 capitalizações (atualmente mostra gráfico)</h4>
+                <div class="code-block">
+capitalizationBreakdown: [
+  { ym: '2024-01', capitalized: 15000 },
+  { ym: '2024-02', capitalized: 17550 }
+]
+// length = 2 → condição &gt; 1 = TRUE → ✅ Mostra gráfico
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔧 Outros Possíveis Problemas</h3>
+            <ul>
+                <li><strong>capitalizationBreakdown undefined:</strong> Verifique se a função <code>computeCapitalizationForDebt</code> está retornando o array corretamente</li>
+                <li><strong>Altura das barras:</strong> A escala pode estar muito pequena: <code>Math.min(60, (item.capitalized / 1000) * 2)</code></li>
+                <li><strong>CSS não aplicado:</strong> Verifique se os estilos inline estão sendo aplicados corretamente</li>
+            </ul>
+        </div>
+
+        <div class="debug-section">
+            <h3>🎯 Correção Completa</h3>
+            <p>Substitua a linha 1742 no arquivo <code>js/dashboard.js</code>:</p>
+            
+            <div class="code-block">
+// ANTES (LINHA 1742)
+const timelineChartHtml = cap.capitalizationBreakdown && cap.capitalizationBreakdown.length > 1 ? `
+
+// DEPOIS
+const timelineChartHtml = cap.capitalizationBreakdown && cap.capitalizationBreakdown.length >= 1 ? `
+            </div>
+            
+            <p class="success">✅ Com esta mudança, o gráfico aparecerá sempre que houver pelo menos 1 capitalização!</p>
+        </div>
+    </div>
+</body>
+</html>

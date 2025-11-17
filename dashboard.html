@@ -22,6 +22,12 @@
         <div class="head-right">
           <button id="nav-toggle" class="toggle" aria-label="Abrir menu" aria-controls="app-sidebar" aria-expanded="false">Menu</button>
           <div class="header-actions">
+            <button id="share-invite-btn" class="outline" aria-label="Gerar convite de visualização" title="Compartilhar leitura dos empréstimos">Compartilhar leitura</button>
+        <button id="share-accept-btn" class="outline" aria-label="Aceitar convite de visualização" title="Usar um código de convite recebido" aria-controls="share-invite-area" aria-expanded="false">Usar convite</button>
+        <div id="share-invite-area" style="display:none; gap:8px; align-items:center; margin-left:8px;">
+          <input type="text" id="share-invite-input" placeholder="Código de convite (UUID)" aria-label="Código de convite" style="min-width:280px;" />
+          <button id="share-accept-confirm-btn" class="outline" aria-label="Confirmar código de convite">Confirmar convite</button>
+        </div>
             <button id="signout-btn" class="outline" aria-label="Sair da sessão">Sair</button>
           </div>
         </div>
@@ -158,6 +164,6 @@
     <div id="snackbar" class="snackbar" aria-live="polite" aria-atomic="true" hidden></div>
     <!-- D3.js (CDN) para gráficos leves sem build -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-    <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="js/dashboard.js?v=capitalizacao-ui-v3"></script>
   </body>
 </html>
