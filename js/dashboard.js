@@ -122,6 +122,21 @@ function formatCentsForInput(cents) {
 
 function attachBRLMask(input) {
   if (!input) return
+  try {
+    if (window.Cleave) {
+      new Cleave(input, {
+        numeral: true,
+        numeralDecimalMark: ',',
+        delimiter: '.',
+        numeralDecimalScale: 2,
+        numeralIntegerScale: 15,
+        numeralPositiveOnly: false
+      })
+      input.classList.remove('input-error')
+      input.setAttribute('aria-invalid', 'false')
+      return
+    }
+  } catch {}
   const update = () => {
     const digits = String(input.value || '').replace(/\D+/g, '')
     const cents = Math.max(0, Number(digits || '0'))
@@ -576,6 +591,7 @@ async function loadPersistedLoanIntoUI() {
     loan.debtId = divida.id
     loan.principalCents = Math.round(Number(divida.valor_principal || 0) * 100)
     loan.monthlyRatePct = Number(divida.taxa_juros || loan.monthlyRatePct)
+    loan.startDateIso = divida.data_inicio
     // Calcula residual a partir dos pagamentos persistidos
     const pays = await fetchPagamentosForDebt(divida.id)
     loan.pays = pays
@@ -689,7 +705,7 @@ async function renderDebtSummary() {
     const principalCents = Math.round(Number(d.valor_principal || 0) * 100)
     const residualBaseCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
     const taxa = Number(d.taxa_juros || 0)
-    const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct: taxa, pays, debtId: d.id })
+    const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct: taxa, pays, debtId: d.id, startDateIso: d.data_inicio })
     const baseCents = Number.isFinite(cap.residualCentsDisplay) ? cap.residualCentsDisplay : residualBaseCents
   const card = document.createElement('div')
   card.className = 'panel'
@@ -796,7 +812,7 @@ async function renderDebtSummary() {
       // Ativar este empréstimo no estado local
       loan.debtId = d.id
       loan.principalCents = principalCents
-      loan.residualCents = saldoCents
+      loan.residualCents = baseCents
       loan.monthlyRatePct = taxa
       // Reconstruir cronograma a partir dos pagamentos existentes
       let residualTracker = principalCents
@@ -1003,11 +1019,34 @@ function undoLast() {
 // Snackbar com ação (ex.: Desfazer)
 let snackbarTimer = null
 function showSnackbar(message, actionLabel = 'Desfazer', onAction = null, ttlMs = 6000) {
+  try {
+    if (window.Toastify) {
+      const node = document.createElement('div')
+      const span = document.createElement('span')
+      span.textContent = message
+      node.appendChild(span)
+      if (onAction) {
+        const btn = document.createElement('button')
+        btn.textContent = actionLabel || 'Desfazer'
+        btn.style.marginLeft = '12px'
+        btn.onclick = () => { try { onAction() } finally { toast.hideToast() } }
+        node.appendChild(btn)
+      }
+      const toast = window.Toastify({
+        node,
+        duration: ttlMs,
+        close: true,
+        gravity: 'top',
+        position: 'right',
+        stopOnFocus: true
+      })
+      toast.showToast()
+      return
+    }
+  } catch {}
   const root = els.snackbar
   if (!root) return
-  // Limpa qualquer timer anterior
   if (snackbarTimer) { clearTimeout(snackbarTimer); snackbarTimer = null }
-  // Conteúdo
   root.innerHTML = ''
   const msgEl = document.createElement('span')
   msgEl.className = 'msg'
@@ -1022,12 +1061,10 @@ function showSnackbar(message, actionLabel = 'Desfazer', onAction = null, ttlMs 
   if (onAction) root.appendChild(actionBtn)
   root.appendChild(closeBtn)
   root.hidden = false
-  // Handlers
   actionBtn.onclick = () => {
     try { onAction?.() } finally { hideSnackbar() }
   }
   closeBtn.onclick = hideSnackbar
-  // TTL
   snackbarTimer = setTimeout(hideSnackbar, ttlMs)
 }
 function hideSnackbar() {
@@ -1214,10 +1251,21 @@ async function registrarPagamentoMes(totalPagoCentsRaw = 0) {
     return
   }
 
-  // Juros gerados no período e separação do que foi efetivamente pago
-  const jurosGeradoCents = Math.round(loan.residualCents * (loan.monthlyRatePct / 100))
-  const jurosPagoCents = Math.min(totalPagoCents, jurosGeradoCents)
-  const amortCents = Math.min(Math.max(0, subtrairCents(totalPagoCents, jurosGeradoCents)), loan.residualCents)
+  // Cálculo de teto de juros do mês corrente: tudo que exceder vira amortização
+  const todayParts = getFortalezaParts(new Date())
+  const ym = ymStr(todayParts)
+  let jurosEsperadoMesCents = Math.round((Number.isFinite(loan.residualCentsDisplay) ? loan.residualCentsDisplay : loan.residualCents) * (loan.monthlyRatePct / 100))
+  let jurosPagoAteAgoraCents = 0
+  try {
+    if (loan.debtId) {
+      const pays = await fetchPagamentosForDebt(loan.debtId)
+      loan.pays = pays
+      jurosPagoAteAgoraCents = sumInterestPaidForMonth(pays, ym)
+    }
+  } catch {}
+  const jurosRestanteCents = Math.max(0, subtrairCents(jurosEsperadoMesCents, jurosPagoAteAgoraCents))
+  const jurosPagoCents = Math.min(totalPagoCents, jurosRestanteCents)
+  const amortCents = Math.min(Math.max(0, subtrairCents(totalPagoCents, jurosPagoCents)), loan.residualCents)
 
   // Atualiza saldo apenas com a amortização realizada
   const novoResidual = subtrairCents(loan.residualCents, amortCents)
@@ -1242,6 +1290,10 @@ async function registrarPagamentoMes(totalPagoCentsRaw = 0) {
       const res = await persistPagamento(jurosPagoCents, amortCents, eventoEm)
       if (res?.ok) payMsg = 'Pagamento registrado e salvo.'
       else payMsg = 'Pagamento registrado (falha ao salvar).'
+      try {
+        const refreshedPays = await fetchPagamentosForDebt(loan.debtId)
+        loan.pays = refreshedPays
+      } catch {}
     } else {
       payMsg = 'Pagamento registrado (salve o empréstimo para persistir).'
     }
@@ -1419,6 +1471,12 @@ function attachScrollLockToSchedule() {
 // Utilidades de data para America/Fortaleza
 function getFortalezaParts(date = new Date()) {
   try {
+    if (window.luxon && window.luxon.DateTime) {
+      const dt = window.luxon.DateTime.fromJSDate(date).setZone('America/Fortaleza')
+      return { year: dt.year, month: dt.month, day: dt.day }
+    }
+  } catch {}
+  try {
     const parts = new Intl.DateTimeFormat('pt-BR', {
       timeZone: 'America/Fortaleza', year: 'numeric', month: '2-digit', day: '2-digit'
     }).formatToParts(date)
@@ -1454,10 +1512,19 @@ function sumInterestPaidForMonth(pays, ym) {
   let total = 0
   for (const p of pays) {
     try {
-      const d = p.data_pagamento ? new Date(p.data_pagamento) : (p.created_at ? new Date(p.created_at) : null)
-      if (!d) continue
-      const parts = getFortalezaParts(d)
-      const currYm = ymStr(parts)
+      let d = null
+      if (window.luxon && window.luxon.DateTime) {
+        const src = p.data_pagamento || p.created_at
+        if (!src) continue
+        const dt = window.luxon.DateTime.fromISO(String(src), { setZone: true }).setZone('America/Fortaleza')
+        d = { year: dt.year, month: dt.month }
+      } else {
+        const raw = p.data_pagamento ? new Date(p.data_pagamento) : (p.created_at ? new Date(p.created_at) : null)
+        if (!raw) continue
+        const parts = getFortalezaParts(raw)
+        d = { year: parts.year, month: parts.month }
+      }
+      const currYm = ymStr(d)
       if (currYm === ym) {
         total += Math.round(Number(p.juros_pago || 0) * 100)
       }
@@ -1465,7 +1532,7 @@ function sumInterestPaidForMonth(pays, ym) {
   }
   return total
 }
-function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId }) {
+function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId, startDateIso }) {
   try {
     const today = getFortalezaParts()
     const currentYm = ymStr(today)
@@ -1474,10 +1541,15 @@ function computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId
     const rate = Number(ratePct || 0)
     const key = `loan:lastCapYm:${debtId || 'local'}`
     const lastCapYm = localStorage.getItem(key) || null
-    let monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : [currentYm]
-    if (!monthsToProcess.length) {
-      monthsToProcess = [currentYm]
-    }
+    const startYm = (() => {
+      try {
+        if (!startDateIso) return null
+        const d = new Date(startDateIso)
+        const p = getFortalezaParts(d)
+        return ymStr(p)
+      } catch { return null }
+    })()
+    let monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : ((startYm && startYm === currentYm) ? [] : [currentYm])
     const trend = []
     const breakdown = []
     for (const ym of monthsToProcess) {
@@ -1580,7 +1652,15 @@ function applyMonthlyCapitalizationIfDue() {
     const rate = Number(loan.monthlyRatePct || 0)
     const key = `loan:lastCapYm:${loan.debtId || 'local'}`
     const lastCapYm = localStorage.getItem(key) || null
-    const monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : [currentYm]
+    const startYm = (() => {
+      try {
+        if (!loan.startDateIso) return null
+        const d = new Date(loan.startDateIso)
+        const p = getFortalezaParts(d)
+        return ymStr(p)
+      } catch { return null }
+    })()
+    const monthsToProcess = lastCapYm ? listMonthsBetween(lastCapYm, currentYm) : ((startYm && startYm === currentYm) ? [] : [currentYm])
     const trend = []
     const breakdown = []
     for (const ym of monthsToProcess) {
@@ -1637,7 +1717,7 @@ async function openDebtScheduleModal(d) {
     const residualBaseCents = Math.max(0, subtrairCents(principalCents, amortTotalCents))
     
     // Capitalização específica desta dívida
-    const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId: d.id })
+    const cap = computeCapitalizationForDebt({ residualBaseCents, ratePct, pays, debtId: d.id, startDateIso: d.data_inicio })
     const baseCents = Number.isFinite(cap.residualCentsDisplay) ? cap.residualCentsDisplay : residualBaseCents
     const nextInterestCents = Math.round(baseCents * (ratePct / 100))
 
@@ -1723,25 +1803,6 @@ async function openDebtScheduleModal(d) {
             <span class="chip chip-interest">${formatBRL(nextInterestCents)}</span>
           </div>
         </div>
-        
-        ${cap.capitalizationBreakdown && cap.capitalizationBreakdown.length > 0 ? `
-          <div class="capitalization-info">
-            <h4>📈 Juros do mês</h4>
-            <div class="cap-timeline">
-              ${cap.capitalizationBreakdown.map(item => `
-                <div class="cap-item" style="margin: 8px 0; display: grid; gap: 8px; align-items: start; padding: 8px 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                  <span style="font-size: 14px; font-weight: 600;">📅 ${item.ym}</span>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <span class="chip chip-interest">Juros do mês ${formatBRL(item.expected || 0)}</span>
-                    <span class="chip">Pago ${formatBRL(item.paid || 0)}</span>
-                    <span class="chip chip-interest">${item.capitalized > 0 ? `Entrou no saldo ${formatBRL(item.capitalized)}` : 'Entrou no saldo R$ 0,00'}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-        
         <div class="trend" aria-label="Tendência do saldo">${renderBalanceSparklineSVG(cap.residualTrend || [])}</div>
         <div class="waterfall-wrap" aria-label="Capitalização do mês">${renderWaterfallSVG(cap.capitalizationBreakdown || [])}</div>
       </div>
@@ -1815,27 +1876,7 @@ async function openDebtScheduleModal(d) {
     `
     modalContent.appendChild(tableSection)
 
-    // Adicionar gráfico temporal de capitalização - DESIGN PROFISSIONAL
-    if (cap.capitalizationBreakdown && cap.capitalizationBreakdown.length >= 1) {
-      const timelineSection = document.createElement('div')
-      timelineSection.className = 'timeline-chart'
-      timelineSection.innerHTML = `
-        <h4>📊 Linha do tempo: juros no saldo</h4>
-        <div class="timeline-bars">
-          ${cap.capitalizationBreakdown.map(item => {
-            const height = Math.max(15, Math.min(70, (item.capitalized / 1000) * 4))
-            return `
-              <div class="timeline-bar">
-                <div class="bar" style="height: ${height}px; background: ${item.capitalized > 0 ? '#F59E0B' : 'var(--gray-600)'};"></div>
-                <div class="label">${item.ym}</div>
-                <div class="value" style="color: ${item.capitalized > 0 ? '#F59E0B' : 'var(--gray-500)'};">${item.capitalized > 0 ? formatBRL(item.capitalized) : '-'}</div>
-              </div>
-            `
-          }).join('')}
-        </div>
-      `
-      modalContent.appendChild(timelineSection)
-    }
+    
     // Event listeners para fechar
     backdrop.addEventListener('click', () => {
       document.body.classList.remove('modal-open')
