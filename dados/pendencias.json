@@ -1,0 +1,73 @@
+{
+  "marca": "ARMAF",
+  "criterio": "Pendências que impedem publicação total ou exigem omissão de campos conflitantes.",
+  "pendencias_bloqueantes": [
+    {
+      "ordem": 1,
+      "produto": "Club de Nuit A Collector's Pride",
+      "tipo": "variante",
+      "problema": "O preço não identifica qual conjunto Collector's Pride está no estoque.",
+      "necessario": "Foto frontal e traseira, SKU ou EAN."
+    },
+    {
+      "ordem": 3,
+      "produto": "Club De Nuit Elixir",
+      "tipo": "identidade_e_volume",
+      "problema": "A correspondência oficial localizada é Club de Nuit Urban Man Elixir, não o nome abreviado recebido.",
+      "necessario": "Confirmar nome impresso e volume do estoque."
+    },
+    {
+      "ordem": 16,
+      "produto": "Magnific",
+      "tipo": "identidade",
+      "problema": "Existem vários produtos Armaf com nomes próximos, sem correspondência exata a Magnific.",
+      "necessario": "Foto frontal, EAN/SKU ou nome completo."
+    },
+    {
+      "ordem": 18,
+      "produto": "Odyssey Candy",
+      "tipo": "grafia_variante_notas",
+      "problema": "A grafia oficial encontrada é Candee e há divergências de pirâmide em fontes oficiais próximas.",
+      "necessario": "Foto da embalagem e EAN."
+    },
+    {
+      "ordem": 20,
+      "produto": "Odyssey Femme",
+      "tipo": "apresentacao",
+      "problema": "O nome aparece em discovery set, mas a apresentação comercial autônoma não foi confirmada de forma inequívoca.",
+      "necessario": "Foto do frasco/caixa, volume e EAN."
+    },
+    {
+      "ordem": 21,
+      "produto": "Odyssey Femme Gold",
+      "tipo": "identidade",
+      "problema": "Não foi localizada correspondência oficial exata.",
+      "necessario": "Foto frontal, EAN/SKU ou nome completo."
+    },
+    {
+      "ordem": 24,
+      "produto": "Odyssey Revolution",
+      "tipo": "variante_notas",
+      "problema": "A correspondência localizada é Ultra Edition; há também body spray e sinais de erro na pirâmide do cadastro.",
+      "necessario": "Foto do produto e EAN; manter notas bloqueadas."
+    }
+  ],
+  "pendencias_nao_bloqueantes": [
+    {"ordem":4,"produto":"Club de Nuit Iconic","campo":"volume","regra":"Não informar até definir a apresentação vendida."},
+    {"ordem":5,"produto":"Club de Nuit Imperiale","campo":"volume","regra":"Não informar até definir a apresentação vendida."},
+    {"ordem":7,"produto":"Club de Nuit Intense Man 200ml","campo":"cadastro_oficial","regra":"Validar embalagem/EAN devido à inconsistência textual da página."},
+    {"ordem":9,"produto":"Club de Nuit Milestone","campo":"publico","regra":"Omitir gênero por divergência regional; definir volume."},
+    {"ordem":10,"produto":"Club de Nuit Sillage","campo":"publico","regra":"Omitir gênero por divergência no próprio cadastro; definir volume."},
+    {"ordem":11,"produto":"Club de Nuit Untold","campo":"volume","regra":"Não informar até definir a apresentação vendida."},
+    {"ordem":12,"produto":"Club de Nuit Woman","campo":"volume","regra":"Não informar até definir a apresentação vendida."},
+    {"ordem":13,"produto":"Island Bliss","campo":"publico","regra":"Omitir gênero por divergência regional."},
+    {"ordem":14,"produto":"Lion Heart Man","campo":"nome_familia","regra":"Usar Club de Nuit Lionheart Man; omitir família conflitante."},
+    {"ordem":15,"produto":"Lion Heart Woman","campo":"nome_familia","regra":"Usar Club de Nuit Lionheart Woman; omitir família conflitante."},
+    {"ordem":17,"produto":"Odyssey Black Florest","campo":"nome","regra":"Publicar como Odyssey Black Forest."},
+    {"ordem":19,"produto":"Odyssey Dubai Chocolat","campo":"nome","regra":"Usar a grafia impressa no estoque e validar EAN."},
+    {"ordem":23,"produto":"Odyssey Limone","campo":"nome_volume","regra":"Publicar como Odyssey Limoni; definir volume."},
+    {"ordem":25,"produto":"Odyssey Spectra","campo":"publico_volume","regra":"Omitir gênero e definir volume; não confundir com Blue Edition."},
+    {"ordem":27,"produto":"Mandarin Sky","campo":"nome_volume","regra":"Publicar como Odyssey Mandarin Sky e definir volume."},
+    {"ordem":28,"produto":"Yum Yum","campo":"publico","regra":"Omitir gênero por divergência regional."}
+  ]
+}
